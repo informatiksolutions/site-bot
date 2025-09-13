@@ -1,0 +1,31 @@
+version: "3.8"
+services:
+  typesense:
+    image: typesense/typesense:0.25.2
+    environment:
+      - TYPESENSE_DATA_DIR=/data
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+      - TYPESENSE_ENABLE_CORS=true
+    ports:
+      - "8108:8108"
+    volumes:
+      - ./data/typesense:/data
+
+  api:
+    build: .
+    image: site-bot-api:latest
+    command: ["uvicorn", "api.server:app", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      - TYPESENSE_HOST=typesense
+      - TYPESENSE_PORT=8108
+      - TYPESENSE_API_KEY=${TYPESENSE_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-}
+      - EMBED_MODEL=sentence-transformers/all-MiniLM-L6-v2
+    volumes:
+      - ./:/app
+      - ./data:/app/data
+    depends_on:
+      - typesense
+    ports:
+      - "8000:8000"
